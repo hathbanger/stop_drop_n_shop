@@ -8,6 +8,10 @@ import './product.dart';
 
 class ProductsProvider with ChangeNotifier {
   List<Product> _items = [];
+  final String authToken;
+  final String userId;
+
+  ProductsProvider(this.authToken, this._items, this.userId);
 
   List<Product> get items {
     return [..._items];
@@ -22,8 +26,8 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> fetchAndSetProducts() async {
-    const url =
-        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products.json';
+    var url =
+        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products.json?auth=$authToken';
     try {
       final response = await http.get(url);
       print(json.decode(response.body));
@@ -33,6 +37,10 @@ class ProductsProvider with ChangeNotifier {
       if (extractedData == null) {
         return;
       }
+      url =
+          'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/userFavorites/$userId.json?auth=$authToken';
+      final favoriteResponse = await http.get(url);
+      final favoriteData = json.decode(favoriteResponse.body);
 
       extractedData.forEach((prodId, prodData) {
         loadedProducts.add(Product(
@@ -40,7 +48,8 @@ class ProductsProvider with ChangeNotifier {
           title: prodData["title"],
           description: prodData["description"],
           price: prodData["price"],
-          isFavorite: prodData["isFavorite"],
+          isFavorite:
+              favoriteData == null ? false : favoriteData[prodId] ?? false,
           imageUrl: prodData["imageUrl"],
         ));
       });
@@ -52,8 +61,8 @@ class ProductsProvider with ChangeNotifier {
   }
 
   Future<void> addProduct(Product product) async {
-    const url =
-        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products.json';
+    final url =
+        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products.json?auth=$authToken';
     try {
       final response = await http.post(url,
           body: json.encode(
@@ -62,7 +71,6 @@ class ProductsProvider with ChangeNotifier {
               'description': product.description,
               'price': product.price,
               'imageUrl': product.imageUrl,
-              'isFavorite': product.isFavorite,
             },
           ));
       final newProduct = Product(
@@ -83,7 +91,7 @@ class ProductsProvider with ChangeNotifier {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
       final url =
-          'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products/$id.json';
+          'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken';
       await http.patch(
         url,
         body: json.encode(
@@ -103,7 +111,7 @@ class ProductsProvider with ChangeNotifier {
 
   Future<void> deleteProduct(String id) async {
     final url =
-        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products/$id.json';
+        'https://stopdropnshop-55c7d-default-rtdb.firebaseio.com/products/$id.json?auth=$authToken';
     final existingProductIndex =
         _items.indexWhere((product) => product.id == id);
     var existingProduct = _items[existingProductIndex];
