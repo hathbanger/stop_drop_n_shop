@@ -23,7 +23,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   String get userId {
-    if (userId != null) {
+    if (_userId != null) {
       return _userId;
     }
     return null;
@@ -50,6 +50,7 @@ class AuthProvider with ChangeNotifier {
       }
       _token = responseData["idToken"];
       _userId = responseData["localId"];
+      print("_userId is $_userId");
       _expiryDate = DateTime.now()
           .add(Duration(seconds: int.parse(responseData['expiresIn'])));
       notifyListeners();
